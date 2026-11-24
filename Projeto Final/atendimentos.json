@@ -9,5 +9,16 @@
     "id_horario": 1,
     "total": 200.0,
     "pago": true
+  },
+  {
+    "id": 2,
+    "data": "24/11/2026 15:55",
+    "queixa_principal": "vista ruim",
+    "historico_saude": "pessimo",
+    "avaliacao": "foi boa",
+    "prescricao": "um oculos novo, estava fora do eixa a lente",
+    "id_horario": 2,
+    "total": 200.0,
+    "pago": false
   }
 ]

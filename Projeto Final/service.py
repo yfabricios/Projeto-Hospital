@@ -237,6 +237,37 @@ class Service:
         return AtendimentoDAO().listar_id(id)
 
     @staticmethod
+    def profissional_totalizar_atendimentos(id_profissional, data_inicial, data_final):
+        if data_inicial > data_final:
+            raise ValueError("A data inicial não pode ser posterior à data final")
+
+        horarios = {
+            horario.get_id(): horario
+            for horario in Service.horario_listar()
+            if horario.get_id_profissional() == id_profissional
+        }
+        servicos = Service.servico_listar()
+        totais = {servico.get_id(): 0 for servico in servicos}
+
+        for atendimento in Service.atendimento_listar():
+            data_atendimento = atendimento.get_data().date()
+            if not data_inicial <= data_atendimento <= data_final:
+                continue
+
+            horario = horarios.get(atendimento.get_id_horario())
+            if horario is None:
+                continue
+
+            id_servico = horario.get_id_servico()
+            if id_servico in totais:
+                totais[id_servico] += 1
+
+        return [
+            {"Serviço": servico.get_descricao(), "Quantidade de atendimentos": totais[servico.get_id()]}
+            for servico in servicos
+        ]
+
+    @staticmethod
     def atendimento_atualizar(id, data, queixa_principal, historico_saude, avaliacao, prescricao, id_horario, total, pago):
         obj = Atendimento(id, data, queixa_principal, historico_saude, avaliacao, prescricao)
         obj.set_id_horario(id_horario)
@@ -246,15 +277,6 @@ class Service:
     @staticmethod
     def atendimento_excluir(id):
         AtendimentoDAO().excluir(id)
-
-    @staticmethod
-    def atendimentoitem_listar_atendimento(id_atendimento):
-        h = []
-        atendimentos = Service.atendimentoitem_listar()
-        for obj in atendimentos:
-            if obj.get_id_atendimento() == id_atendimento: h.append(obj)
-        h.sort(key = lambda obj : obj.get_id())
-        return h
 
     @staticmethod
     def cliente_criar_admin():

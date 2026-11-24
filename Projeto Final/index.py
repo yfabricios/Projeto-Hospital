@@ -15,6 +15,7 @@ from templates.confirmarservicoui import ConfirmarServicoUI
 from templates.admalterarsenhaui import ADMAlterarSenhaUI
 from templates.registraratendimentoui import RegistrarAtendimentoUI
 from templates.pagaratendimentoui import PagarAtendimentoUI
+from templates.totalizaratendimentoui import TotalizarAtendimentoUI
 from service import Service
 import streamlit as st
 
@@ -52,12 +53,13 @@ class IndexUI:
         if op == "Meus Serviços": VisualizarServicosUI.main()
         if op == "Pagar Atendimento": PagarAtendimentoUI.main()
     def menu_profissional():
-        op = st.sidebar.selectbox("Menu", ["Meus Dados", "Abrir Agenda", "Minha Agenda", "Confirmar Serviço", "Registrar Atendimento"])
+        op = st.sidebar.selectbox("Menu", ["Meus Dados", "Abrir Agenda", "Minha Agenda", "Confirmar Serviço", "Registrar Atendimento", "Totalizar meus atendimentos"])
         if op == "Meus Dados": PerfilProfissionalUI.profissional_main()
         if op == "Abrir Agenda": AbrirAgendaUI.main()
         if op == "Minha Agenda": VisualizarAgendaUI.main()
         if op == "Confirmar Serviço": ConfirmarServicoUI.main()
         if op == "Registrar Atendimento": RegistrarAtendimentoUI.main()
+        if op == "Totalizar meus atendimentos": TotalizarAtendimentoUI.main()
     def sair_do_sistema():
         if st.sidebar.button("Sair"):
             del st.session_state["usuario_id"]

@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 class DAO(ABC):
     def __init__(self, arquivo):
-        self._arquivo = arquivo
+        self._arquivo = Path(__file__).resolve().parent.parent / arquivo
         self._objetos = []
         self._abrir()  
 

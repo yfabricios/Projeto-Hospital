@@ -1,8 +1,9 @@
 import sqlite3
+from pathlib import Path
 
 class Database:
     conn = None
-    nome_bd="agenda.db"
+    nome_bd = Path(__file__).resolve().parent.parent / "agenda.db"
 
     @classmethod
     def abrir(cls):
