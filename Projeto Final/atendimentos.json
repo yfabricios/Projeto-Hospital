@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "data": "17/11/2026 15:03",
+    "queixa_principal": "vis\u00e3o embasada ",
+    "historico_saude": "boa",
+    "avaliacao": "ele esta com uma lente de grau errada",
+    "prescricao": "uma lente nova",
+    "id_horario": 1,
+    "total": 200.0,
+    "pago": true
+  }
+]
