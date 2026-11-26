@@ -19,6 +19,17 @@
     "prescricao": "um oculos novo, estava fora do eixa a lente",
     "id_horario": 2,
     "total": 200.0,
+    "pago": true
+  },
+  {
+    "id": 3,
+    "data": "26/11/2026 17:50",
+    "queixa_principal": "Tem medo de andar de avi\u00e3o",
+    "historico_saude": "Talvez bom",
+    "avaliacao": "Problema resolvido, conseguiu andar de avi\u00e3o e jogar",
+    "prescricao": "Uma viajem de avi\u00e3o para o Rio, para a familia e ele, e pagar a minha tambem",
+    "id_horario": 3,
+    "total": 300.0,
     "pago": false
   }
 ]

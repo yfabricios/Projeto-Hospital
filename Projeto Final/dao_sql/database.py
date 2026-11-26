@@ -49,7 +49,9 @@ class Database:
             CREATE TABLE IF NOT EXISTS servico (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 descricao TEXT NOT NULL,
-                valor REAL NOT NULL
+                valor REAL NOT NULL,
+                id_profissional INTEGER,
+                FOREIGN KEY (id_profissional) REFERENCES profissional(id)
             );
         """)
 
@@ -68,6 +70,7 @@ class Database:
                 FOREIGN KEY (id_profissional) REFERENCES profissional(id) ON DELETE CASCADE
             );
         """)
+        cls.garantir_vinculo_servico_profissional(cls.conn)
 
         # --------------------- Tabela Atendimento ---------------------
         cls.execute("""
@@ -79,10 +82,42 @@ class Database:
                 avaliacao TEXT NULL,
                 prescricao TEXT NULL,
                 id_horario INTEGER,
+                total REAL NOT NULL DEFAULT 0,
+                pago INTEGER NOT NULL DEFAULT 0,
 
                 FOREIGN KEY (id_horario) REFERENCES horario(id) ON DELETE CASCADE
             );
         """)
+        cls.garantir_colunas_atendimento(cls.conn)
+
+    @staticmethod
+    def garantir_vinculo_servico_profissional(conn):
+        colunas = {
+            coluna[1]
+            for coluna in conn.execute("PRAGMA table_info(servico)").fetchall()
+        }
+        if "id_profissional" not in colunas:
+            conn.execute(
+                "ALTER TABLE servico ADD COLUMN id_profissional INTEGER "
+                "REFERENCES profissional(id)"
+            )
+            conn.commit()
+
+    @staticmethod
+    def garantir_colunas_atendimento(conn):
+        colunas = {
+            coluna[1]
+            for coluna in conn.execute("PRAGMA table_info(atendimento)").fetchall()
+        }
+        if "total" not in colunas:
+            conn.execute(
+                "ALTER TABLE atendimento ADD COLUMN total REAL NOT NULL DEFAULT 0"
+            )
+        if "pago" not in colunas:
+            conn.execute(
+                "ALTER TABLE atendimento ADD COLUMN pago INTEGER NOT NULL DEFAULT 0"
+            )
+        conn.commit()
 
 if __name__ == "__main__":
     Database.abrir()

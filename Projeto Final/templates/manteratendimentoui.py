@@ -96,7 +96,9 @@ class ManterAtendimentoUI:
                         historico_saude, 
                         avaliacao, 
                         prescricao, 
-                        horario.get_id()
+                        horario.get_id(),
+                        op.get_total(),
+                        op.get_pago(),
                     )
                     st.success("Atendimento atualizado com sucesso")
                     time.sleep(2)

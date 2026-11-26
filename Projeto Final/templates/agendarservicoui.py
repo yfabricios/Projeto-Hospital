@@ -13,7 +13,12 @@ class AgendarServicoUI:
             if len(horarios) == 0: st.write("Nenhum horário disponível")
             else:
                 horario = st.selectbox("Informe o horário", horarios)
-                servicos = Service.servico_listar()
+                servicos = Service.servico_listar_profissional(
+                    profissional.get_id()
+                )
+                if len(servicos) == 0:
+                    st.write("Esse profissional ainda não possui serviços cadastrados")
+                    return
                 servico = st.selectbox("Informe o serviço", servicos)
                 if st.button("Agendar"):
                     Service.horario_atualizar(horario.get_id(), horario.get_data(), False, st.session_state["usuario_id"], servico.get_id(), profissional.get_id())

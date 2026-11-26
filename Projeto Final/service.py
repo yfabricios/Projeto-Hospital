@@ -8,7 +8,7 @@ from dao_sql.horariodao import HorarioDAO
 from models.profissional import Profissional
 from dao_sql.profissionaldao import ProfissionalDAO
 from models.atendimento import Atendimento
-from dao_json.atendimentodao import AtendimentoDAO
+from dao_sql.atendimentodao import AtendimentoDAO
 from datetime import datetime, timedelta
 
 class Service:
@@ -64,11 +64,13 @@ class Service:
         return h
     
     @staticmethod
-    def servico_inserir(descricao, valor):
+    def servico_inserir(descricao, valor, id_profissional):
         for obj in Service.servico_listar():
             if obj.get_descricao() == descricao:
                 raise ValueError("Serviço já cadastrado")
-        c = Servico(0, descricao, valor)
+        if Service.profissional_listar_id(id_profissional) is None:
+            raise ValueError("Selecione um profissional válido para o serviço")
+        c = Servico(0, descricao, valor, id_profissional)
         ServicoDAO().inserir(c)
 
     @staticmethod
@@ -81,12 +83,39 @@ class Service:
         return ServicoDAO().listar_id(id)
 
     @staticmethod
-    def servico_atualizar(id, descricao, valor):
+    def servico_listar_profissional(id_profissional):
+        return [
+            servico
+            for servico in Service.servico_listar()
+            if servico.get_id_profissional() == id_profissional
+        ]
+
+    @staticmethod
+    def servico_atualizar(id, descricao, valor, id_profissional):
         for obj in Service.servico_listar():
             if obj.get_id() != id and obj.get_descricao() == descricao:
                 raise ValueError("Descrição já cadastrada em outro serviço")
 
-        c = Servico(id, descricao, valor)
+        servico_atual = Service.servico_listar_id(id)
+        if servico_atual is None:
+            raise ValueError("Serviço não encontrado")
+        if servico_atual.get_id_profissional() != id_profissional:
+            horarios_do_servico = [
+                horario
+                for horario in Service.horario_listar()
+                if horario.get_id_servico() == id
+            ]
+            if any(
+                horario.get_id_profissional() != id_profissional
+                for horario in horarios_do_servico
+            ):
+                raise ValueError(
+                    "O serviço possui horários vinculados a outro profissional"
+                )
+        if Service.profissional_listar_id(id_profissional) is None:
+            raise ValueError("Selecione um profissional válido para o serviço")
+
+        c = Servico(id, descricao, valor, id_profissional)
         ServicoDAO().atualizar(c)
 
     @staticmethod
@@ -99,6 +128,7 @@ class Service:
 
     @staticmethod
     def horario_inserir(data, confirmado, id_cliente, id_servico, id_profissional):
+        Service._validar_servico_profissional(id_servico, id_profissional)
         for obj in Service.horario_listar():
             if obj.get_id_profissional() == id_profissional and obj.get_data() == data:
                 raise ValueError("O profissional já possui um horário cadastrado nessa mesma data e hora")
@@ -122,6 +152,7 @@ class Service:
     
     @staticmethod
     def horario_atualizar(id, data, confirmado, id_cliente, id_servico, id_profissional):
+        Service._validar_servico_profissional(id_servico, id_profissional)
         for obj in Service.horario_listar():
             if obj.get_id() != id and obj.get_id_profissional() == id_profissional and obj.get_data() == data:
                 raise ValueError("O profissional já possui outro horário cadastrado nessa mesma data e hora")
@@ -132,6 +163,18 @@ class Service:
         obj.set_id_servico(id_servico)
         obj.set_id_profissional(id_profissional)
         HorarioDAO().atualizar(obj)
+
+    @staticmethod
+    def _validar_servico_profissional(id_servico, id_profissional):
+        if id_servico is None:
+            return
+        servico = Service.servico_listar_id(id_servico)
+        if servico is None:
+            raise ValueError("O serviço selecionado não foi encontrado")
+        if servico.get_id_profissional() != id_profissional:
+            raise ValueError(
+                "O serviço selecionado não está vinculado a esse profissional"
+            )
 
     @staticmethod
     def horario_excluir(id):
@@ -207,6 +250,8 @@ class Service:
         for obj in Service.horario_listar():
             if obj.get_id_profissional() == id:
                 raise ValueError("Profissional possui horário cadastrado: não é possível excluir")
+        for obj in Service.servico_listar_profissional(id):
+            raise ValueError("Profissional possui serviços cadastrados: não é possível excluir")
         ProfissionalDAO().excluir(id)
     
     @staticmethod
@@ -241,14 +286,78 @@ class Service:
         if data_inicial > data_final:
             raise ValueError("A data inicial não pode ser posterior à data final")
 
+        servicos = Service.servico_listar_profissional(id_profissional)
+        totais = {servico.get_id(): 0 for servico in servicos}
         horarios = {
             horario.get_id(): horario
             for horario in Service.horario_listar()
             if horario.get_id_profissional() == id_profissional
         }
-        servicos = Service.servico_listar()
-        totais = {servico.get_id(): 0 for servico in servicos}
+        for atendimento in Service.atendimento_listar():
+            if not data_inicial <= atendimento.get_data().date() <= data_final:
+                continue
+            horario = horarios.get(atendimento.get_id_horario())
+            if horario and horario.get_id_servico() in totais:
+                totais[horario.get_id_servico()] += 1
 
+        return [
+            {
+                "Serviço": servico.get_descricao(),
+                "Quantidade de atendimentos": totais[servico.get_id()],
+            }
+            for servico in servicos
+        ]
+
+    @staticmethod
+    def profissional_totalizar_atendimentos_periodo(data_inicial, data_final):
+        if data_inicial > data_final:
+            raise ValueError("A data inicial não pode ser posterior à data final")
+
+        profissionais = Service.profissional_listar()
+        totais = {
+            profissional.get_id(): 0
+            for profissional in profissionais
+        }
+        horarios = {
+            horario.get_id(): horario
+            for horario in Service.horario_listar()
+        }
+
+        for atendimento in Service.atendimento_listar():
+            if not data_inicial <= atendimento.get_data().date() <= data_final:
+                continue
+            horario = horarios.get(atendimento.get_id_horario())
+            if horario and horario.get_id_profissional() in totais:
+                totais[horario.get_id_profissional()] += 1
+
+        return [
+            {
+                "id_profissional": profissional.get_id(),
+                "Profissional": profissional.get_nome(),
+                "Quantidade de serviços": totais[profissional.get_id()],
+            }
+            for profissional in profissionais
+        ]
+
+    @staticmethod
+    def profissional_listar_atendimentos(id_profissional, data_inicial, data_final):
+        if data_inicial > data_final:
+            raise ValueError("A data inicial não pode ser posterior à data final")
+
+        horarios = {
+            horario.get_id(): horario
+            for horario in Service.horario_listar()
+            if horario.get_id_profissional() == id_profissional
+        }
+        servicos = {
+            servico.get_id(): servico
+            for servico in Service.servico_listar()
+        }
+        clientes = {
+            cliente.get_id(): cliente
+            for cliente in Service.cliente_listar()
+        }
+        resultados = []
         for atendimento in Service.atendimento_listar():
             data_atendimento = atendimento.get_data().date()
             if not data_inicial <= data_atendimento <= data_final:
@@ -258,14 +367,19 @@ class Service:
             if horario is None:
                 continue
 
-            id_servico = horario.get_id_servico()
-            if id_servico in totais:
-                totais[id_servico] += 1
-
-        return [
-            {"Serviço": servico.get_descricao(), "Quantidade de atendimentos": totais[servico.get_id()]}
-            for servico in servicos
-        ]
+            servico = servicos.get(horario.get_id_servico())
+            cliente = clientes.get(horario.get_id_cliente())
+            resultados.append(
+                {
+                    "data": atendimento.get_data(),
+                    "cliente": cliente.get_nome() if cliente else "Sem cliente",
+                    "servico": servico.get_descricao() if servico else "Sem serviço",
+                    "valor": atendimento.get_total(),
+                    "pago": atendimento.get_pago(),
+                    "id_servico": servico.get_id() if servico else None,
+                }
+            )
+        return resultados
 
     @staticmethod
     def atendimento_atualizar(id, data, queixa_principal, historico_saude, avaliacao, prescricao, id_horario, total, pago):
