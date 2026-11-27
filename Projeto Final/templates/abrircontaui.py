@@ -4,12 +4,12 @@ import time
 
 class AbrirContaUI:
     def main():
-        st.header("Abrir Conta no Sistema")
+        st.header("Abrir nova conta:")
         nome = st.text_input("Informe o nome")
         email = st.text_input("Informe o e-mail")
         fone = st.text_input("Informe o fone")
         senha = st.text_input("Informe a senha", type="password")
-        if st.button("Inserir"):
+        if st.button("Cadastrar", type="primary"):
             try:
                 Service.cliente_inserir(nome, email, fone, senha)
                 st.success("Conta criada com sucesso")

@@ -3,10 +3,10 @@ from service import Service
 
 class LoginUI:
     def main():
-        st.header("Entrar no Sistema")
+        st.header("Login:")
         email = st.text_input("Informe o e-mail")
         senha = st.text_input("Informe a senha", type="password")
-        if st.button("Entrar"):
+        if st.button("Entrar", type="primary"):
             c = Service.cliente_autenticar(email, senha)
             if c != None:
                 st.session_state["usuario_id"] = c["id"]

@@ -58,9 +58,17 @@ class IndexUI:
         Service.cliente_criar_admin()
         IndexUI.sidebar()
     def menu_visitante():
-        op = st.sidebar.selectbox("Menu", ["Entrar no Sistema","Abrir Conta"])
-        if op == "Entrar no Sistema": LoginUI.main()
-        if op == "Abrir Conta": AbrirContaUI.main()
+        if "menu_visitante_op" not in st.session_state:
+            st.session_state["menu_visitante_op"] = "Entrar"
+
+        with st.sidebar:
+            st.title(':red[Bem-Vindo, Visitante!]')
+            st.write('---')
+
+            if st.button("Entrar", use_container_width=True): st.session_state["menu_visitante_op"] = "Entrar"
+            if st.button("Cadastrar-se", use_container_width=True): st.session_state["menu_visitante_op"] = "Criar Nova Conta"
+        if st.session_state["menu_visitante_op"] == "Entrar": LoginUI.main()
+        if st.session_state["menu_visitante_op"] == "Criar Nova Conta": AbrirContaUI.main()
     def menu_cliente():
         op = st.sidebar.selectbox("Menu", ["Meus Dados", "Agendar Serviço", "Meus Serviços", "Pagar Atendimento"])
         if op == "Meus Dados": PerfilClienteUI.cliente_main()
